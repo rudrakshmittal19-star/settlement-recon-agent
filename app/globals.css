@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tick-size: 6px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.tick {
+  position: relative;
+}
+.tick::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: var(--tick-size);
+  height: var(--tick-size);
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
