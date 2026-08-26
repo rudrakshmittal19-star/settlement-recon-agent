@@ -56,7 +56,7 @@ Dashboard (Next.js) — match rate, value reconciled, exception review + overrid
 
 - Next.js 14 (App Router), deployed on Vercel
 - Supabase (Postgres) for settlements, ledger, matches, audit log
-- Gemini API for the reasoning layer
+- GRroq API for the reasoning layer
 - Tailwind CSS for the dashboard
 
 ## Local setup
