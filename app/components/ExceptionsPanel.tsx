@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SkeletonList } from "./Skeleton";
 
 type ExceptionRow = {
   id: string;
@@ -57,7 +58,7 @@ export default function ExceptionsPanel({ refreshKey }: { refreshKey: number }) 
     setOverriding(null);
   }
 
-  if (loading) return <p className="text-ink/50 text-sm">Loading exceptions…</p>;
+  if (loading) return <SkeletonList count={3} />;
   if (exceptions.length === 0)
     return (
       <p className="text-ink/50 text-sm border border-line rounded-md p-4 bg-paperRaised">

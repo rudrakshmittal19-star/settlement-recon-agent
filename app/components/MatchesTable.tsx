@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MatchDrilldown from "./MatchDrilldown";
+import { SkeletonList } from "./Skeleton";
 import { downloadCsv } from "@/lib/csv";
 
 type MatchRow = {
@@ -58,7 +59,7 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
     );
   }
 
-  if (loading) return <p className="text-ink/50 text-sm">Loading matches…</p>;
+  if (loading) return <SkeletonList count={4} />;
   if (matches.length === 0)
     return (
       <p className="text-ink/50 text-sm border border-line rounded-md p-4 bg-paperRaised">

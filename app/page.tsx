@@ -1,120 +1,85 @@
-"use client";
+import Link from "next/link";
 
-import { useState } from "react";
-import ExceptionsPanel from "./components/ExceptionsPanel";
-import MatchesTable from "./components/MatchesTable";
-import AuditLogViewer from "./components/AuditLogViewer";
-import SummaryStats, { type Summary } from "./components/SummaryStats";
-import ReconciliationChart from "./components/ReconciliationChart";
+const STATS = [
+  { value: "84.5%", label: "match rate, real run" },
+  { value: "16", label: "AI + human resolved" },
+  { value: "9", label: "honest exceptions, not hidden" },
+];
 
-type Tab = "exceptions" | "matches" | "audit";
-
-export default function DashboardPage() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [tab, setTab] = useState<Tab>("exceptions");
-
-  async function runReconciliation() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/reconcile", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Reconciliation failed");
-      setSummary(json.summary);
-      setRefreshKey((k) => k + 1);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "exceptions", label: "Exceptions" },
-    { id: "matches", label: "All matches" },
-    { id: "audit", label: "Audit log" },
-  ];
-
+export default function LandingPage() {
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12">
-      <header className="mb-10 -mx-6 px-6 py-8 bg-accent text-paper rounded-b-lg">
-        <p className="mono text-xs uppercase tracking-widest opacity-70 mb-2">
-          Finance Ops · Reconciliation
+    <main className="min-h-screen bg-paper text-ink">
+      <section className="max-w-5xl mx-auto px-6 pt-20 pb-16">
+        <p className="mono text-xs uppercase tracking-widest text-ink/45 mb-4">
+          Finance Ops · AI Reconciliation
         </p>
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          Settlement Reconciliation Agent
+        <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6 anim-rise">
+          Every rupee, <span className="text-accent">accounted for</span> —
+          or explained why not.
         </h1>
-        <p className="opacity-80 mt-2 max-w-2xl">
-          Matches Razorpay settlement records against the internal order ledger.
-          Deterministic matching runs first; ambiguous pairs are escalated to an
-          AI reasoning layer. Every decision is logged and reviewable below.
+        <p className="text-lg text-ink/65 max-w-xl mb-8 anim-rise" style={{ animationDelay: "80ms" }}>
+          Settlement records rarely match the ledger perfectly. This agent
+          reconciles them automatically, escalates genuine judgment calls to
+          AI, and never pretends a mismatch is fine when it isn&apos;t.
         </p>
-      </header>
+        <div className="flex items-center gap-4 anim-rise" style={{ animationDelay: "160ms" }}>
+          <Link
+            href="/dashboard"
+            className="bg-ink text-paper px-6 py-3 rounded-md text-sm font-medium hover:opacity-85 transition"
+          >
+            Open the dashboard
+          </Link>
+          <a href="#how" className="text-sm text-ink/60 hover:text-ink transition">
+            How it works ↓
+          </a>
+        </div>
+      </section>
 
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={runReconciliation}
-          disabled={loading}
-          className="bg-ink text-paper px-5 py-2.5 rounded-md text-sm font-medium hover:opacity-85 transition disabled:opacity-50"
-        >
-          {loading ? "Running reconciliation…" : "Run reconciliation"}
-        </button>
-        {error && <p className="text-exception text-sm">{error}</p>}
-      </div>
-
-      {summary && <SummaryStats summary={summary} />}
-
-      <div className="mt-8">
-        <ReconciliationChart refreshKey={refreshKey} />
-      </div>
-
-      <div className="mt-4">
-        <div className="flex items-center gap-1 border-b border-line mb-5">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-px ${
-                tab === t.id ? "border-ink text-ink" : "border-transparent text-ink/45 hover:text-ink/70"
-              }`}
+      <section className="max-w-5xl mx-auto px-6 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {STATS.map((s, i) => (
+            <div
+              key={s.label}
+              className="ledger-card border border-line rounded-md bg-paperRaised py-5 anim-rise"
+              style={{ animationDelay: `${240 + i * 80}ms` }}
             >
-              {t.label}
-            </button>
+              <p className="font-display text-3xl font-bold">{s.value}</p>
+              <p className="text-xs text-ink/55 mt-1">{s.label}</p>
+            </div>
           ))}
         </div>
+      </section>
 
-        {tab === "exceptions" && (
-          <>
-            <p className="text-ink/60 text-sm mb-4">
-              Every row here is something neither the deterministic engine nor the AI
-              reasoning layer could confidently resolve on its own.
-            </p>
-            <ExceptionsPanel refreshKey={refreshKey} />
-          </>
-        )}
-
-        {tab === "matches" && (
-          <>
-            <p className="text-ink/60 text-sm mb-4">
-              Every settlement/ledger pair processed in the most recent run, matched or not.
-            </p>
-            <MatchesTable refreshKey={refreshKey} />
-          </>
-        )}
-
-        {tab === "audit" && (
-          <>
-            <p className="text-ink/60 text-sm mb-4">
-              The full decision trail — every action taken by the deterministic engine,
-              the AI reasoner, or a human reviewer.
-            </p>
-            <AuditLogViewer refreshKey={refreshKey} />
-          </>
-        )}
-      </div>
+      <section id="how" className="max-w-5xl mx-auto px-6 pb-24">
+        <div className="border-t border-line pt-10">
+          <p className="mono text-xs uppercase tracking-widest text-ink/45 mb-6">How it works</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                n: "01",
+                t: "Deterministic pass",
+                d: "Exact reference and amount matches close instantly — no AI needed for arithmetic.",
+              },
+              {
+                n: "02",
+                t: "AI reasoning, only when ambiguous",
+                d: "Refunds, payout lag, fee variance — judgment calls get a plain-English explanation, not a guess.",
+              },
+              {
+                n: "03",
+                t: "Honest exceptions",
+                d: "What nobody can confidently resolve goes to a human, with the full decision trail attached.",
+              },
+            ].map((step) => (
+              <div key={step.n}>
+                <p className="mono text-xs text-accent mb-2">{step.n}</p>
+                <p className="font-medium mb-1">{step.t}</p>
+                <p className="text-sm text-ink/60">{step.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

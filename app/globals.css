@@ -44,3 +44,40 @@ body {
   text-transform: uppercase;
   font-weight: 600;
 }
+
+/* Landing page entrance animation */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.anim-rise {
+  animation: rise 0.6s ease-out both;
+}
+
+/* Skeleton loading shimmer, used while data fetches */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, #E9E7DE 25%, #F3F2ED 37%, #E9E7DE 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .skeleton {
+    animation: none;
+  }
+}

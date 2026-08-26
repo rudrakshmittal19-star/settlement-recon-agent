@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SkeletonList } from "./Skeleton";
 
 type AuditEntry = {
   id: string;
@@ -34,7 +35,7 @@ export default function AuditLogViewer({ refreshKey }: { refreshKey: number }) {
       .finally(() => setLoading(false));
   }, [refreshKey]);
 
-  if (loading) return <p className="text-ink/50 text-sm">Loading audit log…</p>;
+  if (loading) return <SkeletonList count={4} />;
   if (entries.length === 0)
     return (
       <p className="text-ink/50 text-sm border border-line rounded-md p-4 bg-paperRaised">
