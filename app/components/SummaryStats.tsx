@@ -8,12 +8,24 @@ export type Summary = {
   value_unresolved: number;
 };
 
-function TallyCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function TallyCard({
+  label,
+  value,
+  sub,
+  bg,
+  fg,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  bg: string;
+  fg: string;
+}) {
   return (
-    <div className="ledger-card bg-paperRaised border border-line rounded-md py-4">
-      <p className="mono text-[0.65rem] uppercase tracking-widest text-ink/50">{label}</p>
-      <p className="font-display text-3xl font-bold mt-1.5">{value}</p>
-      {sub && <p className="text-xs text-ink/50 mt-1">{sub}</p>}
+    <div className={`ledger-card rounded-md py-4 ${bg}`}>
+      <p className={`mono text-[0.65rem] uppercase tracking-widest ${fg} opacity-70`}>{label}</p>
+      <p className={`font-display text-3xl font-bold mt-1.5 ${fg}`}>{value}</p>
+      {sub && <p className={`text-xs mt-1 ${fg} opacity-60`}>{sub}</p>}
     </div>
   );
 }
@@ -28,17 +40,23 @@ export default function SummaryStats({ summary }: { summary: Summary }) {
         label="Match rate"
         value={`${(summary.match_rate * 100).toFixed(1)}%`}
         sub={`${summary.matched} of ${summary.total_pairs_processed} pairs`}
+        bg="bg-matchedBg"
+        fg="text-matched"
       />
       <TallyCard
         label="Resolved by AI"
         value={`${summary.resolved_by_ai}`}
-        sub="ambiguous pairs, deterministic pass couldn't close"
+        sub="ambiguous, deterministic pass couldn't close"
+        bg="bg-pendingBg"
+        fg="text-pending"
       />
-      <TallyCard label="Value reconciled" value={inr(summary.value_reconciled)} />
+      <TallyCard label="Value reconciled" value={inr(summary.value_reconciled)} bg="bg-accentBg" fg="text-accent" />
       <TallyCard
         label="Value unresolved"
         value={inr(summary.value_unresolved)}
         sub={`${summary.exceptions} exceptions`}
+        bg="bg-exceptionBg"
+        fg="text-exception"
       />
     </div>
   );

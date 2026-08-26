@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MatchDrilldown from "./MatchDrilldown";
+import { downloadCsv } from "@/lib/csv";
 
 type MatchRow = {
   id: string;
@@ -23,6 +24,8 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     setLoading(true);
@@ -31,6 +34,29 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
       .then((json) => setMatches(json.matches ?? []))
       .finally(() => setLoading(false));
   }, [refreshKey]);
+
+  const filtered = matches.filter((m) => {
+    if (statusFilter !== "all" && m.status !== statusFilter) return false;
+    if (!search) return true;
+    const haystack = `${m.settlements?.utr ?? ""} ${m.ledger_entries?.order_id ?? ""}`.toLowerCase();
+    return haystack.includes(search.toLowerCase());
+  });
+
+  function exportCsv() {
+    downloadCsv(
+      "matches.csv",
+      filtered.map((m) => ({
+        status: m.status,
+        stage: m.match_stage,
+        confidence: m.confidence,
+        settlement_utr: m.settlements?.utr ?? "",
+        settlement_amount: m.settlements?.net_amount ?? "",
+        ledger_order_id: m.ledger_entries?.order_id ?? "",
+        ledger_amount: m.ledger_entries?.amount ?? "",
+        reasoning: m.reasoning ?? "",
+      }))
+    );
+  }
 
   if (loading) return <p className="text-ink/50 text-sm">Loading matches…</p>;
   if (matches.length === 0)
@@ -42,6 +68,31 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
 
   return (
     <>
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <input
+          type="text"
+          placeholder="Search UTR or order ID…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border border-line rounded-md px-3 py-1.5 text-sm bg-paperRaised flex-1 min-w-[180px]"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="border border-line rounded-md px-3 py-1.5 text-sm bg-paperRaised"
+        >
+          <option value="all">All statuses</option>
+          <option value="matched">Matched</option>
+          <option value="exception">Exception</option>
+        </select>
+        <button
+          onClick={exportCsv}
+          className="text-xs bg-accentBg text-accent px-3 py-1.5 rounded-md hover:opacity-80 transition font-medium"
+        >
+          Export CSV
+        </button>
+      </div>
+
       <div className="border border-line rounded-md overflow-hidden bg-paperRaised">
         <table className="w-full text-sm">
           <thead>
@@ -54,7 +105,7 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
             </tr>
           </thead>
           <tbody>
-            {matches.map((m) => (
+            {filtered.map((m) => (
               <tr
                 key={m.id}
                 onClick={() => setSelected(m.id)}
@@ -76,7 +127,9 @@ export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-ink/40 mt-2">Click any row to see its full decision trail.</p>
+      <p className="text-xs text-ink/40 mt-2">
+        Showing {filtered.length} of {matches.length}. Click any row for its full decision trail.
+      </p>
 
       {selected && <MatchDrilldown matchId={selected} onClose={() => setSelected(null)} />}
     </>

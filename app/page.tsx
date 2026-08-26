@@ -40,14 +40,14 @@ export default function DashboardPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12">
-      <header className="mb-10 border-b border-line pb-6">
-        <p className="mono text-xs uppercase tracking-widest text-ink/45 mb-2">
+      <header className="mb-10 -mx-6 px-6 py-8 bg-accent text-paper rounded-b-lg">
+        <p className="mono text-xs uppercase tracking-widest opacity-70 mb-2">
           Finance Ops · Reconciliation
         </p>
         <h1 className="font-display text-3xl font-bold tracking-tight">
           Settlement Reconciliation Agent
         </h1>
-        <p className="text-ink/60 mt-2 max-w-2xl">
+        <p className="opacity-80 mt-2 max-w-2xl">
           Matches Razorpay settlement records against the internal order ledger.
           Deterministic matching runs first; ambiguous pairs are escalated to an
           AI reasoning layer. Every decision is logged and reviewable below.
@@ -78,9 +78,7 @@ export default function DashboardPage() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-px ${
-                tab === t.id
-                  ? "border-ink text-ink"
-                  : "border-transparent text-ink/45 hover:text-ink/70"
+                tab === t.id ? "border-ink text-ink" : "border-transparent text-ink/45 hover:text-ink/70"
               }`}
             >
               {t.label}
