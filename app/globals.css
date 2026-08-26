@@ -2,28 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --tick-size: 6px;
+body {
+  font-family: var(--font-body), sans-serif;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+.font-display {
+  font-family: var(--font-display), sans-serif;
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
-.tick {
+/* Ledger tally card: perforated left edge, like tally/receipt paper */
+.ledger-card {
   position: relative;
+  padding-left: 2rem;
 }
-.tick::before {
+.ledger-card::before {
   content: "";
   position: absolute;
-  left: -12px;
-  top: 50%;
-  width: var(--tick-size);
-  height: var(--tick-size);
-  border-radius: 999px;
-  transform: translateY(-50%);
+  left: 10px;
+  top: 12px;
+  bottom: 12px;
+  width: 0;
+  border-left: 2px dotted #c7c3b5;
+}
+
+/* Ink-stamp style status badge */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
 }

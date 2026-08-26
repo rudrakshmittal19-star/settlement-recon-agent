@@ -60,7 +60,7 @@ export default function ExceptionsPanel({ refreshKey }: { refreshKey: number }) 
   if (loading) return <p className="text-ink/50 text-sm">Loading exceptions…</p>;
   if (exceptions.length === 0)
     return (
-      <p className="text-ink/50 text-sm border border-line rounded-lg p-4 bg-white/40">
+      <p className="text-ink/50 text-sm border border-line rounded-md p-4 bg-paperRaised">
         No exceptions right now. Run reconciliation to generate results.
       </p>
     );
@@ -68,39 +68,37 @@ export default function ExceptionsPanel({ refreshKey }: { refreshKey: number }) 
   return (
     <div className="space-y-3">
       {exceptions.map((ex) => (
-        <div key={ex.id} className="border border-line rounded-lg p-4 bg-white/40">
+        <div key={ex.id} className="ledger-card border border-line rounded-md p-4 bg-paperRaised">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="mono text-xs uppercase tracking-wide bg-exception/10 text-exception px-2 py-0.5 rounded">
-                  {ex.match_stage}
-                </span>
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="stamp text-exception">{ex.match_stage}</span>
                 {ex.confidence !== null && (
-                  <span className="mono text-xs text-ink/50">
+                  <span className="mono text-xs text-ink/40">
                     confidence {(ex.confidence * 100).toFixed(0)}%
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm mb-2">
+              <div className="grid grid-cols-2 gap-4 text-sm mb-2.5">
                 <div>
-                  <p className="text-ink/50 text-xs mb-0.5">Settlement</p>
+                  <p className="text-ink/45 text-[0.65rem] uppercase tracking-wide mb-0.5">Settlement</p>
                   {ex.settlements ? (
-                    <p className="mono">
+                    <p className="mono text-[0.85rem]">
                       {ex.settlements.utr} · ₹{ex.settlements.net_amount} · {ex.settlements.settled_at}
                     </p>
                   ) : (
-                    <p className="text-ink/40 italic">none</p>
+                    <p className="text-ink/35 italic">none</p>
                   )}
                 </div>
                 <div>
-                  <p className="text-ink/50 text-xs mb-0.5">Ledger entry</p>
+                  <p className="text-ink/45 text-[0.65rem] uppercase tracking-wide mb-0.5">Ledger entry</p>
                   {ex.ledger_entries ? (
-                    <p className="mono">
+                    <p className="mono text-[0.85rem]">
                       {ex.ledger_entries.order_id} · ₹{ex.ledger_entries.amount} · {ex.ledger_entries.order_date}
                     </p>
                   ) : (
-                    <p className="text-ink/40 italic">none</p>
+                    <p className="text-ink/35 italic">none</p>
                   )}
                 </div>
               </div>
@@ -112,14 +110,14 @@ export default function ExceptionsPanel({ refreshKey }: { refreshKey: number }) 
               <button
                 onClick={() => override(ex.id, "matched")}
                 disabled={overriding === ex.id}
-                className="text-xs bg-matched/10 text-matched px-3 py-1.5 rounded-md hover:bg-matched/20 transition disabled:opacity-50"
+                className="text-xs bg-matchedBg text-matched px-3 py-1.5 rounded-md hover:opacity-80 transition disabled:opacity-50 font-medium"
               >
                 Approve as match
               </button>
               <button
                 onClick={() => override(ex.id, "exception")}
                 disabled={overriding === ex.id}
-                className="text-xs bg-exception/10 text-exception px-3 py-1.5 rounded-md hover:bg-exception/20 transition disabled:opacity-50"
+                className="text-xs bg-exceptionBg text-exception px-3 py-1.5 rounded-md hover:opacity-80 transition disabled:opacity-50 font-medium"
               >
                 Keep as exception
               </button>

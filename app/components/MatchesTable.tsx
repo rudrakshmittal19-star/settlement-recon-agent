@@ -1,0 +1,84 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import MatchDrilldown from "./MatchDrilldown";
+
+type MatchRow = {
+  id: string;
+  match_stage: string;
+  status: string;
+  confidence: number | null;
+  reasoning: string | null;
+  settlements: { utr: string; net_amount: number; settled_at: string } | null;
+  ledger_entries: { order_id: string; amount: number; order_date: string } | null;
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const styles =
+    status === "matched" ? "text-matched" : status === "exception" ? "text-exception" : "text-pending";
+  return <span className={`stamp ${styles}`}>{status}</span>;
+}
+
+export default function MatchesTable({ refreshKey }: { refreshKey: number }) {
+  const [matches, setMatches] = useState<MatchRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/matches")
+      .then((r) => r.json())
+      .then((json) => setMatches(json.matches ?? []))
+      .finally(() => setLoading(false));
+  }, [refreshKey]);
+
+  if (loading) return <p className="text-ink/50 text-sm">Loading matches…</p>;
+  if (matches.length === 0)
+    return (
+      <p className="text-ink/50 text-sm border border-line rounded-md p-4 bg-paperRaised">
+        No matches yet. Run reconciliation to generate results.
+      </p>
+    );
+
+  return (
+    <>
+      <div className="border border-line rounded-md overflow-hidden bg-paperRaised">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-line text-left">
+              <th className="p-3 text-[0.65rem] uppercase tracking-wide text-ink/45">Status</th>
+              <th className="p-3 text-[0.65rem] uppercase tracking-wide text-ink/45">Stage</th>
+              <th className="p-3 text-[0.65rem] uppercase tracking-wide text-ink/45">Settlement</th>
+              <th className="p-3 text-[0.65rem] uppercase tracking-wide text-ink/45">Ledger</th>
+              <th className="p-3 text-[0.65rem] uppercase tracking-wide text-ink/45">Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matches.map((m) => (
+              <tr
+                key={m.id}
+                onClick={() => setSelected(m.id)}
+                className="border-b border-line last:border-0 cursor-pointer hover:bg-line/20 transition"
+              >
+                <td className="p-3"><StatusBadge status={m.status} /></td>
+                <td className="p-3 mono text-xs text-ink/60">{m.match_stage}</td>
+                <td className="p-3 mono text-xs">
+                  {m.settlements ? `${m.settlements.utr} · ₹${m.settlements.net_amount}` : <span className="text-ink/35 italic">none</span>}
+                </td>
+                <td className="p-3 mono text-xs">
+                  {m.ledger_entries ? `${m.ledger_entries.order_id} · ₹${m.ledger_entries.amount}` : <span className="text-ink/35 italic">none</span>}
+                </td>
+                <td className="p-3 mono text-xs">
+                  {m.confidence !== null ? `${(m.confidence * 100).toFixed(0)}%` : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-ink/40 mt-2">Click any row to see its full decision trail.</p>
+
+      {selected && <MatchDrilldown matchId={selected} onClose={() => setSelected(null)} />}
+    </>
+  );
+}

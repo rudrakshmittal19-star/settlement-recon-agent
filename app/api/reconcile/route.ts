@@ -21,6 +21,20 @@ import { reasonAboutCandidate } from "@/lib/reasoning";
  */
 export async function POST() {
   try {
+    // Clear previous run's results first — otherwise re-running reconciliation
+    // accumulates duplicate matches/audit entries on every click.
+    const { error: clearAuditErr } = await supabaseAdmin
+      .from("audit_log")
+      .delete()
+      .not("id", "is", null);
+    if (clearAuditErr) throw clearAuditErr;
+
+    const { error: clearMatchesErr } = await supabaseAdmin
+      .from("matches")
+      .delete()
+      .not("id", "is", null);
+    if (clearMatchesErr) throw clearMatchesErr;
+
     const { data: settlements, error: settleErr } = await supabaseAdmin
       .from("settlements")
       .select("*");
