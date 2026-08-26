@@ -90,7 +90,7 @@ export default function ReconciliationChart({ refreshKey }: { refreshKey: number
             <XAxis type="number" hide />
             <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12, fontFamily: "var(--font-mono)" }} axisLine={false} tickLine={false} />
             <Tooltip
-              formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`}
+              formatter={(v) => `₹${Number(v ?? 0).toLocaleString("en-IN")}`}
               contentStyle={{ fontFamily: "var(--font-mono)", fontSize: 12, borderRadius: 6 }}
             />
             <Bar dataKey="value" radius={4}>

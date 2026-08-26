@@ -58,7 +58,7 @@ export async function POST() {
 
     for (const result of deterministicResults) {
       let finalStatus: "matched" | "exception" | "pending_review" = "exception";
-      let finalStage = result.stage;
+      let finalStage: "deterministic" | "ai_candidate" | "unresolved" | "ai_reasoning" = result.stage;
       let reasoning = result.reasoning;
       let confidence = result.confidence;
 

@@ -251,6 +251,37 @@ async function main() {
     });
   }
 
+  // --- 4. ~3 deliberate tax-line mismatches (GST charged != 18% of fee) ---
+  for (let i = 0; i < 3; i++) {
+    orderCounter++;
+    const orderId = `ORD-${pad(orderCounter)}`;
+    const gross = Math.round((Math.random() * 3000 + 300) * 100) / 100;
+    const orderDate = addDays(baseDate, 15 + i);
+    const { fee } = computeFee(gross);
+
+    const wrongRate = i === 0 ? 0.12 : i === 1 ? 0.28 : 0.05;
+    const wrongTax = Math.round(fee * wrongRate * 100) / 100;
+    const net = Math.round((gross - fee - wrongTax) * 100) / 100;
+
+    ledgerEntries.push({
+      order_id: orderId,
+      customer_name: randomName(),
+      amount: gross,
+      order_date: isoDate(orderDate),
+      refund_amount: 0,
+      status: "completed",
+    });
+    settlements.push({
+      utr: `UTR${pad(orderCounter, 8)}`,
+      order_ref: orderId,
+      gross_amount: gross,
+      fee,
+      tax_on_fee: wrongTax,
+      net_amount: net,
+      settled_at: isoDate(addDays(orderDate, 1)),
+    });
+  }
+
   console.log(`Inserting ${ledgerEntries.length} ledger entries...`);
   const { error: ledgerErr } = await supabase.from("ledger_entries").insert(ledgerEntries);
   if (ledgerErr) throw ledgerErr;
