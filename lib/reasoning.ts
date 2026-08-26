@@ -8,17 +8,17 @@
  * (partial refund, payout lag, fee miscalculation) or whether it should be
  * flagged as a genuine exception for a human to look at.
  *
- * Uses Gemini (matches the model the author already has production experience
- * with, from MediAssist). Swap the client below for Claude/OpenAI if preferred —
- * the prompt and output contract stay the same.
+ * Uses Groq (openai/gpt-oss-20b) — chosen over Gemini for this project because
+ * Groq's free tier allows far more requests/minute, which matters since a full
+ * reconciliation run fires one call per ambiguous pair (~15-20 per run).
  *
  * IMPORTANT: this function must return structured, parseable output. We ask for
  * strict JSON and validate it — never trust free-form text as a routing signal.
  */
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import type { MatchResult } from "./matching";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GROQ_API_KEY;
 
 export type ReasoningVerdict = {
   verdict: "match" | "exception";
@@ -47,12 +47,11 @@ export async function reasonAboutCandidate(candidate: MatchResult): Promise<Reas
     return {
       verdict: "exception",
       confidence: 0,
-      reasoning: "AI reasoning layer not configured (missing GEMINI_API_KEY) — routed to human review.",
+      reasoning: "AI reasoning layer not configured (missing GROQ_API_KEY) — routed to human review.",
     };
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const groq = new Groq({ apiKey });
 
   const userPrompt = `Settlement record:
 ${JSON.stringify(
@@ -86,35 +85,65 @@ Raw amount delta computed by the deterministic engine: ${candidate.amountDelta}
 
 Decide: match or exception. Return strict JSON only.`;
 
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: `${SYSTEM_PROMPT}\n\n${userPrompt}` }] }],
-    generationConfig: { temperature: 0.1 },
-  });
+  // Groq's free tier is far more generous than Gemini's here, but we still
+  // retry once on a rate-limit error rather than assuming it'll never happen.
+  const MAX_RETRIES = 2;
+  let lastErr: unknown = null;
 
-  const raw = result.response.text().trim();
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model: "openai/gpt-oss-20b",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.1,
+      });
 
-  try {
-    const cleaned = raw.replace(/^```json\s*|```$/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+      const raw = completion.choices[0]?.message?.content?.trim() ?? "";
 
-    if (
-      (parsed.verdict === "match" || parsed.verdict === "exception") &&
-      typeof parsed.confidence === "number" &&
-      typeof parsed.reasoning === "string"
-    ) {
-      return parsed as ReasoningVerdict;
+      try {
+        const cleaned = raw.replace(/^```json\s*|```$/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+
+        if (
+          (parsed.verdict === "match" || parsed.verdict === "exception") &&
+          typeof parsed.confidence === "number" &&
+          typeof parsed.reasoning === "string"
+        ) {
+          return parsed as ReasoningVerdict;
+        }
+        throw new Error("Response JSON did not match expected shape");
+      } catch {
+        // Never let a malformed model response silently become a false "match."
+        return {
+          verdict: "exception",
+          confidence: 0,
+          reasoning: `AI reasoning layer returned an unparseable response — routed to human review. Raw output: ${raw.slice(
+            0,
+            200
+          )}`,
+        };
+      }
+    } catch (err: unknown) {
+      lastErr = err;
+      const status = (err as { status?: number })?.status;
+
+      if (status === 429 && attempt < MAX_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        continue;
+      }
+
+      break;
     }
-    throw new Error("Response JSON did not match expected shape");
-  } catch (err) {
-    // Never let a malformed model response silently become a false "match."
-    // Bounded failure: default to exception + human review.
-    return {
-      verdict: "exception",
-      confidence: 0,
-      reasoning: `AI reasoning layer returned an unparseable response — routed to human review. Raw output: ${raw.slice(
-        0,
-        200
-      )}`,
-    };
   }
+
+  return {
+    verdict: "exception",
+    confidence: 0,
+    reasoning: `AI reasoning layer failed after retries (${
+      lastErr instanceof Error ? lastErr.message : "unknown error"
+    }) — routed to human review.`,
+  };
 }
