@@ -41,7 +41,7 @@ Deterministic matching pass (lib/matching.ts)
    └── no plausible candidate at all            → EXCEPTION (no LLM call)
         │
         ▼
-AI reasoning pass (lib/reasoning.ts) — Gemini, structured JSON output
+AI reasoning pass (lib/reasoning.ts) — Groq, structured JSON output
    ├── plausible explanation (refund/lag/fee)   → MATCHED, reasoning logged
    └── no plausible explanation                 → EXCEPTION, reasoning logged
         │
